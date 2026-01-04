@@ -1,5 +1,5 @@
 import { Webhook } from "svix";
-import User from "../Model/User";
+import User from "../Model/User.js";
 
 // // Api controller function to manage clerk user with databse
 
