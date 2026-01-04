@@ -5,7 +5,7 @@ import User from "../Model/User.js";
 
 export const clerkWebhooks = async(req,res)=>{
 try {
-    const whook = new Webhook(process.env.CLERK_WEBHOK_SECRET)  // webhook as an automatic “push notification” between two systems when something happens.
+    const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET)  // webhook as an automatic “push notification” between two systems when something happens.
 
     await whook.verify(JSON.stringify(req.body),{"svix-id":req.headers["svix-id"],
         "svix-timestamp":req.headers["svix-timestamp"],
@@ -29,7 +29,7 @@ try {
                 
                 case 'user.updated':{
                     const userData = {
-                        email:data.email_address[0].email_address,
+                        email:data.email_addresses[0].email_address,
                         name: data.first_name + " " + data.last_name,
                         imageUrl: data.image_url,
                     }
