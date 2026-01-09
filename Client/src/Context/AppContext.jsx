@@ -3,16 +3,20 @@ import { createContext, useEffect, useState } from "react";
 import { dummyCourses } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import humanizeDuration from "humanize-duration";
+import {useAuth,useUser} from '@clerk/clerk-react'
 
 // Create global App Context
 export const AppContext = createContext();
 
 export const AppContextProvider = (props) => {
 
-  // Currency from environment variables
   const currency = import.meta.env.VITE_CURRENCY;
-
   const navigate = useNavigate();
+
+  const {getToken}=useAuth()  //fetches a secure auth token from Clerk to call protected backend APIs.
+  const{user}=useUser() //provides the currently logged-in user’s profile and metadata from Clerk.
+
+
 
   // State to store all courses
   const [allCourses, setAllCourses] = useState([]);
@@ -101,6 +105,17 @@ export const AppContextProvider = (props) => {
     fetchAllCourses();
     fetchUserEnrolledCourses();
   }, []);
+  
+  const logToken = async()=>{
+    console.log(await getToken());
+    
+  }
+
+  useEffect(()=>{
+    if(user){
+    logToken()
+    }
+  },[user])
 
   // Values exposed to the entire app
   const value = {
