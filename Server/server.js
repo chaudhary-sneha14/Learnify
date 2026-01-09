@@ -9,25 +9,32 @@ import connectCloudinary from './Config/cloudinary.js'
 import courseRouter from './Routes/courseRoute.js'
 import userRouter from './Routes/userRoute.js'
 
-const app=express()
+const app = express()
 
 app.use(cors())
+
+// ✅ STRIPE WEBHOOK MUST COME BEFORE express.json()
+app.post('/stripe', express.raw({ type: 'application/json' }), stripeWebhooks)
+
+// Clerk middleware
 app.use(clerkMiddleware())
+
+// JSON parser for rest of app
 app.use(express.json())
+
 await connectDB()
 await connectCloudinary()
 
-app.get('/',(req,res)=>{
-    res.send("Hello")
+app.get('/', (req, res) => {
+  res.send("Hello")
 })
-app.post('/clerk',express.json(),clerkWebhooks)
-app.use('/api/educator',educatorRouter)
-app.use('/api/course', courseRouter);
-app.use('/api/user', userRouter);
-app.post('/stripe', express.raw({type: 'application/json'}), stripeWebhooks);
 
+// Clerk webhook (JSON is OK here)
+app.post('/clerk', express.json(), clerkWebhooks)
 
+app.use('/api/educator', educatorRouter)
+app.use('/api/course', courseRouter)
+app.use('/api/user', userRouter)
 
-
-const PORT=5000;
-app.listen(process.env.PORT||5000 ,console.log(`Running on port ${PORT}`))
+const PORT = process.env.PORT || 5000
+app.listen(PORT, () => console.log(`Running on port ${PORT}`))
