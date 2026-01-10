@@ -1,11 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { assets } from "../../assets/assets";
 import humanizeDuration from "humanize-duration";
 import YouTube from "react-youtube";
 import { AppContext } from "../../Context/AppContext";
 import Footer from "../../Components/Students/Footer";
 import Loading from "../../Components/Students/Loading";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const CourseDetails = () => {
   // Get course ID from URL
@@ -18,37 +20,78 @@ const CourseDetails = () => {
   const [playerData, setPlayerData] = useState(null); // Stores video player data
 
   // Get functions from context
-  const {
-    allCourses,
-    currency,
-    calculateRating,
-    calculateChapterTime,
-    calculateCourseDuration,
-    calculateNoOfLectures,
-  } = useContext(AppContext);
+ const {
+		allCourses,
+		currency,
+		calculateRating,
+		calculateChapterTime,
+		calculateCourseDuration,
+		calculateNoOfLectures,
+		backendUrl,
+		userData,
+		getToken,
+	} = useContext(AppContext);
 
-  // Fetch course data from all courses array
+
+  // -------------------------Fetch course data from all courses array---------------------
   const fetcheCourseData = async () => {
-    if (!allCourses) return;
-    const findCourse = allCourses.find((course) => course._id === id);
-    setCourseData(findCourse || null);
+   try {
+			const { data } = await axios.get(backendUrl + "/api/course/" + id);
+			if (data.success) {
+				setCourseData(data.courseData);
+			} else {
+				toast.error(data.message);
+			}
+		} catch (error) {
+			toast.error(error.message);
+		}
+
   };
+
+  //----------------------------------------------enrolled courese----------------
+  	const enrollCourse = async () => {
+		try {
+			if (!userData) {
+				return toast.warn("Login to Enroll!");
+			}
+			if (isAlreadyEnrolled) {
+				return toast.warn("Already Enrolled");
+			}
+
+			const token = await getToken();
+			const { data } = await axios.post(backendUrl + "/api/user/purchase",
+				{ courseId: courseData._id },
+				{ headers: { Authorization: `Bearer ${token}` } }
+			);
+
+			if (data.success) {
+				const { session_url } = data;
+				window.location.replace(session_url);
+			} else {
+				toast.error(data.message);
+			}
+		} catch (error) {
+			toast.error(error.message);
+		}
+	}
+
 
   // Toggle chapter expansion
   const toggleSection = (index) => {
     setOpenSections((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
-  // Enroll button handler
-  const enrollCourse = () => {
-    console.log();
-    ("Enroll functionality not implemented yet!");
-  };
 
   // Fetch course data when component loads or ID changes
   useEffect(() => {
     fetcheCourseData();
   }, [allCourses, id]);
+
+  useEffect(() => {
+   if(userData && courseData){
+    setIsAlreadyEnrolled(userData.enrolledCourses.includes(courseData._id))
+   }
+  }, [userData,courseData]);
 
   // Show loading if course not found, otherwise show details
   return courseData ? (

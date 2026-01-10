@@ -1,30 +1,78 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../Context/AppContext'
 import Footer from '../../Components/Students/Footer'
 import { Line } from 'rc-progress'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const MyEnrollments = () => {
   // get enrolled courses and helper function from global context
-  const { enrolledCourses, calculateCourseDuration ,navigate} = useContext(AppContext)
+  const { 	navigate,
+		enrolledCourses,
+		calculateCourseDuration,
+		userData,
+		fetchUserEnrolledCourses,
+		backendUrl,
+		getToken,
+		calculateNoOfLectures,} = useContext(AppContext)
 
   // local state to track progress of each enrolled course
   // each object represents completed lectures vs total lectures
-  const [progressArray, setProgressArray] = useState([
-    { lectureCompleted: 4, totalLectures: 4 },
-    { lectureCompleted: 5, totalLectures: 10 },
-    { lectureCompleted: 0, totalLectures: 6 },
-    { lectureCompleted: 7, totalLectures: 12 },
-    { lectureCompleted: 3, totalLectures: 8 },
-    { lectureCompleted: 10, totalLectures: 10 },
-    { lectureCompleted: 1, totalLectures: 5 },
-    { lectureCompleted: 4, totalLectures: 9 },
-    { lectureCompleted: 6, totalLectures: 15 },
-    { lectureCompleted: 9, totalLectures: 14 },
-    { lectureCompleted: 2, totalLectures: 7 },
-    { lectureCompleted: 11, totalLectures: 20 },
-    { lectureCompleted: 8, totalLectures: 16 },
-    { lectureCompleted: 5, totalLectures: 11 },
-  ])
+  const [progressArray, setProgressArray] = useState([])
+
+
+//-------------------progress of course-----------------------------
+  	const getCourseProgress = async () => {
+  try {
+    // Get auth token from Clerk
+    const token = await getToken();
+
+    // Fetch progress for each enrolled course in parallel
+    const tempProgressArray = await Promise.all(
+      enrolledCourses.map(async (course) => {
+        // Call backend to get progress for this course
+        const { data } = await axios.post(
+          `${backendUrl}/api/user/get-course-progress`,
+          { courseId: course._id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Total lectures in this course
+        const totalLectures = calculateNoOfLectures(course);
+
+        // Completed lectures (0 if no progress found)
+        const lectureCompleted = data.progressData
+          ? data.progressData.lectureCompleted.length
+          : 0;
+
+        // Return progress summary for this course
+        return { totalLectures, lectureCompleted };
+      })
+    );
+
+    // Store all course progress in state
+    setProgressArray(tempProgressArray);
+  } catch (error) {
+    // Show error if API call fails
+    toast.error(error.message);
+  }
+};
+
+
+
+    useEffect(()=>{
+    if(userData){
+      fetchUserEnrolledCourses();
+    }
+  },[userData])
+
+  useEffect(()=>{
+    if(enrolledCourses.length > 0){
+      getCourseProgress();
+    }
+  },[enrolledCourses])
+
+
 
   return (
     <>
@@ -51,14 +99,14 @@ const MyEnrollments = () => {
                   {/* course thumbnail */}
                   <img
                     className="w-14 sm:w-24 md:w-28 cursor-pointer"
-                    onClick={() => navigate("/player/" + course._id)}
+                    onClick={() => navigate(`/player/${String(course._id)}`)}
                     src={course.courseThumbnail}
                     alt="courseThumbnail"
                   />
 
                   <div
                     className="flex-1 cursor-pointer"
-                    onClick={() => navigate("/player/" + course._id)}
+                    onClick={() => navigate(`/player/${String(course._id)}`)}
                   >
                     {/* course title */}
                     <p className="mb-1 max-sm:text-sm">{course.courseTitle}</p>
@@ -94,7 +142,8 @@ const MyEnrollments = () => {
                 <td className="px-3 py-3 max-sm:text-right">
                   <button
                     className="px-3 sm:px-5 py-1.5 sm:py-2 bg-blue-600 max-sm:text-xs text-white"
-                    onClick={() => navigate("/player/" + course._id)}
+                    onClick={() => navigate(`/player/${String(course._id)}`)
+}
                   >
                     {/* show Completed if all lectures are done, else On Going */}
                     {progressArray[index] &&

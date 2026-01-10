@@ -1,5 +1,6 @@
 import {clerkClient} from '@clerk/express' //This gives server-side access to Clerk users.
 import Course from '../Model/Course.js'
+import User from '../Model/User.js'
 import {v2 as cloudinary} from 'cloudinary'
 import { Purchase } from '../Model/Purchase.js'
 

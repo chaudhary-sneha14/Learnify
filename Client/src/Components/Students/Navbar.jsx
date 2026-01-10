@@ -3,10 +3,12 @@ import { assets } from '../../assets/assets'
 import { NavLink, useLocation } from 'react-router-dom'
 import { UserButton, useUser, useClerk } from '@clerk/clerk-react'
 import { AppContext } from '../../Context/AppContext'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const Navbar = () => {
 
-  const {navigate,isEducator}=useContext(AppContext)
+  const {navigate,isEducator,backendUrl, setIsEducator, getToken}=useContext(AppContext)
 
   // Gives access to the current URL path
   const location = useLocation()
@@ -19,6 +21,30 @@ const Navbar = () => {
 
   // Logged-in user object (null if not authenticated)
   const { user } = useUser()
+
+  //-----------------------------------------------beome educator------------------------
+  const becomeEducator = async () => {
+		try {
+			if(isEducator){
+				navigate('/educator')
+				return;
+			}
+
+			const token = await getToken();
+
+			const {data} = await axios.get(backendUrl + '/api/educator/update-role' , {headers: {Authorization: `Bearer ${token}`}})
+			console.log("educ", data);
+			
+			if(data.success){
+				setIsEducator(true);
+				toast.success(data.message)
+			}else{
+				toast.error(data.message)
+			}
+		} catch (error) {
+			toast.error(error.message)
+		}
+	}
 
   return (
     <div
@@ -39,7 +65,7 @@ const Navbar = () => {
           {/* Show these links only when user is logged in */}
           {user && (
             <>
-              <button onClick={()=>{navigate('/educator')}}>
+              <button onClick={becomeEducator}>
                  {isEducator?'Educator Dashboard':'Become Educator'}</button>
               <NavLink to="/my-enrollments">My Enrollments</NavLink>
             </>
@@ -65,7 +91,7 @@ const Navbar = () => {
           {/* Same links for mobile, shown only when logged in */}
           {user && (
             <>
-             <button onClick={()=>{navigate('/educator')}}>
+             <button onClick={becomeEducator}>
                  {isEducator?'Educator Dashboard':'Become Educator'}</button>
               <NavLink to="/my-enrollments">My Enrollments</NavLink>
             </>

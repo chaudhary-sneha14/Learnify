@@ -1,12 +1,17 @@
 // ================= IMPORT SECTION =================
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import uniqid from 'uniqid'
 import Quill from 'quill'
 import { assets } from '../../assets/assets'
+import axios from 'axios'
+import { toast } from 'react-toastify'
+import { AppContext } from '../../Context/AppContext'
 
 const AddCourse = () => {
 
   // ================= EDITOR SECTION =================
+
+   const { backendUrl, getToken,} = useContext(AppContext)
 
   // stores the Quill editor instance
   const quillRef = useRef(null)
@@ -156,9 +161,62 @@ const AddCourse = () => {
   // ================= FORM SUBMIT SECTION =================
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    // currently only prevents refresh
-    // API call can be added later
+       try {
+    e.preventDefault();
+
+    if (!image) {
+      toast.error("Thumbnail Not Selected");
+      return; // Prevent further execution
+    }
+
+    if (!chapters.length) {
+      toast.error("At least one chapter is required!");
+      return;
+    }
+
+    // Ensure each chapter has a chapter order
+    const updatedChapters = chapters.map((ch, index) => ({
+      ...ch,
+      chapterorder: ch.chapterorder || index + 1, // Auto-assign order if missing
+    }));
+
+    const courseData = {
+      courseTitle,
+      courseDescription: quillRef.current.root.innerHTML,
+      coursePrice: Number(coursePrice),
+      discount: Number(discount),
+      isPublished: true, //  Include isPublished field
+      courseContent: updatedChapters,
+    };
+
+    const formData = new FormData();
+    formData.append("courseData", JSON.stringify(courseData)); // ✅ Ensure courseData is sent as JSON
+    formData.append("image", image); // ✅ Ensure image is sent correctly
+
+    const token = await getToken();
+    const { data } = await axios.post(backendUrl + "/api/educator/add-course",
+      formData,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log("data", data);
+
+    if (data.success) {
+      toast.success(data.message);
+      setCourseTitle("");
+      setCoursePrice(0);
+      setDiscount(0);
+      setImage(null);
+      setChapters([]);
+      quillRef.current.root.innerHTML = "";
+    } else {
+      toast.error(data.message);
+    }
+  } catch (error) {
+    toast.error(error.message);
+    console.log(error.message);
+  }
+
   }
 
   // ================= EDITOR INITIALIZE SECTION =================
@@ -228,7 +286,7 @@ const AddCourse = () => {
                   onChange={e => setImage(e.target.files[0])}
                 />
 
-                <img className='max-h-10' src={image ? URL.createObjectURL(image) : ''} />
+                <img className='max-h-10' src={image ? URL.createObjectURL(image) : " "} />
               </label>
             </div>
           </div>

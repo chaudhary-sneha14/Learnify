@@ -2,20 +2,38 @@ import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../Context/AppContext';
 import { assets, dummyDashboardData } from '../../assets/assets';
 import Loading from '../../Components/Students/Loading';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Dashboard = () => {
 
   // getting required values from global AppContext
-  const { currency, isEducator } = useContext(AppContext);
+ const { currency, backendUrl, getToken, isEducator } = useContext(AppContext);
 
   // local state to store dashboard info
   const [dashboardData, setDashboardData] = useState(null);
 
-  // temporary function to load dummy data
-  // later you can replace this with real API call
+ ///------------------------------fetchDashboardData--------------------------------
   const fetchDashboardData = async () => {
-    setDashboardData(dummyDashboardData)
-  }
+   try {
+			const token = await getToken();
+
+			const { data } = await axios.get(backendUrl + "/api/educator/dashboard", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+
+			// console.log("dashboard data", data.dashboardData);
+
+			if (data.success) {
+				setDashboardData(data.dashboardData);
+			} else {
+				toast.error(data.message);
+			}
+		} catch (error) {
+			toast.error(error.message);
+		}
+	};
+  
 
   // runs only on first render
   useEffect(() => {

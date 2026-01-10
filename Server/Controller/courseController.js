@@ -20,7 +20,7 @@ export const getCourseById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const courseData = await Course.finById(id).populate({ path: "educator" });
+    const courseData = await Course.findById(id).populate({ path: "educator" });
 
     // Remove lecture Url if previewFrese is false
 
