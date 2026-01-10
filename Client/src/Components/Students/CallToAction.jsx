@@ -1,24 +1,45 @@
-import React from 'react'
-import { assets } from '../../assets/assets'
+import React, { useContext } from "react";
+import { assets } from "../../assets/assets";
+import { useClerk } from "@clerk/clerk-react";
+import { AppContext } from "../../Context/AppContext";
 
 const CallToAction = () => {
-  return (
-    	<div className="flex flex-col items-center gap-4 pt-10 pb-24 px-8 md:px-0">
-			<h1 className="text-xl md:text-4xl text-gray-800 font-semibold">
-				Learn anything, anytime, anywhere
-			</h1>
-			<p className="text-gray-500 sm:text-sm">
-				Whether you're a student looking to enhance your skills or an educator
-				wanting to share knowledge, Edemy LMS is the perfect platform for you.
-				Get Startd
-			</p>
-			<div className="flex items-center font-medium gap-6 mt-4">
-				<button className='px-10 py-3 rounded-md text-white bg-blue-600'>Get started</button>
-        <button className="flex items-center gap-2">Learn More <img src={assets.arrow_icon} alt="" /></button>
-			
-			</div>
-		</div>
-  )
-}
+  const { openSignIn } = useClerk();
+  const { userData } = useContext(AppContext);
 
-export default CallToAction
+  const handleGetStarted = () => {
+    if (userData) {
+      // user already logged in → go to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // not logged in → open signup / signin
+      openSignIn(); // or openSignIn() if you prefer
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4 pt-10 pb-24 px-8 md:px-0">
+      <h1 className="text-xl md:text-4xl text-gray-800 font-semibold">
+        Learn anything, anytime, anywhere
+      </h1>
+      <p className="text-gray-500 sm:text-sm">
+        Whether you're a student looking to enhance your skills or an educator
+        wanting to share knowledge, Edemy LMS is the perfect platform for you.
+        Get Startd
+      </p>
+      <div className="flex items-center font-medium gap-6 mt-4">
+        <button
+          onClick={handleGetStarted}
+          className="px-10 py-3 rounded-md text-white bg-blue-600"
+        >
+          Get started
+        </button>
+        <button  onClick={handleGetStarted} className="flex items-center gap-2">
+          Learn More <img src={assets.arrow_icon} alt="" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default CallToAction;
