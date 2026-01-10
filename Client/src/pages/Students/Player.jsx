@@ -275,7 +275,7 @@ const Player = () => {
 							{/* dark overlay to make play icon pop */}
 							<div className="absolute inset-0 flex items-center justify-center">
 								<div
-									className="flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-teal-400 shadow-xl transform transition-transform duration-300 hover:shadow-2xl cursor-pointer"
+									className="flex items-center justify-center w-20 h-20 rounded-full bg-linear-to-br from-blue-500 to-teal-400 shadow-xl transform transition-transform duration-300 hover:shadow-2xl cursor-pointer"
 								>
 									<img
 										src={assets.play_icon}

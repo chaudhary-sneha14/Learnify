@@ -98,7 +98,7 @@ const CourseDetails = () => {
     <>
       <div className="flex md:flex-row flex-col-reverse gap-10 relative items-start justify-between md:px-36 px-8 pt-20 text-left">
         {/* Gradient background */}
-        <div className="absolute top-0 left-0 w-full h-section-height -z-10 bg-gradient-to-b from-cyan-100/70"></div>
+        <div className="absolute top-0 left-0 w-full h-section-height -z-10 bg-linear-to-b from-cyan-100/70"></div>
 
         {/* LEFT COLUMN - Course Info */}
         <div className="max-w-xl z-10 text-gray-500">
@@ -250,7 +250,7 @@ const CourseDetails = () => {
         </div>
 
         {/* RIGHT COLUMN - Course Card */}
-        <div className="max-w-course-card z-10 shadow-custom-card rounded-t md:rounded-none overflow-hidden bg-white min-w-[300px] sm:min-w-[420px]">
+        <div className="max-w-course-card z-10 shadow-custom-card rounded-t md:rounded-none overflow-hidden bg-white min-w-75 sm:min-w-105">
           {/* Video player or course thumbnail */}
           {playerData ? (
             <YouTube
