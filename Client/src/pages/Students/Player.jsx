@@ -11,25 +11,26 @@ import { toast } from "react-toastify";
 import axios from "axios";
 
 const Player = () => {
-  // get data from context
-  const { enrolledCourses,
+	const {
+		enrolledCourses,
 		calculateChapterTime,
 		backendUrl,
 		getToken,
 		userData,
-		fetchUserEnrolledCourses, } = useContext(AppContext);
-
-  // get course id from URL
-  const { courseId } = useParams();
-
-  const [courseData, setCourseData] = useState(null);    // store selected course
-  const [openSections, setOpenSections] = useState({});   // track open chapters
-  const [playerData, setPlayerData] = useState(null);   // store selected lecture
-  const [progressData, setProgressData] = useState(null);
+		fetchUserEnrolledCourses,
+	} = useContext(AppContext);
+	const { courseId } = useParams();
+	const [courseData, setCourseData] = useState(null);
+	const [openSections, setOpenSections] = useState({});
+	const [playerData, setPlayerData] = useState(null);
+	const [progressData, setProgressData] = useState(null);
 	const [initialRating, setInitialRating] = useState(0);
 
+	// New states to manage YouTube loading/playing
+	const [isLoadingVideo, setIsLoadingVideo] = useState(false);
+	const [isPlaying, setIsPlaying] = useState(false);
 
-  const getCourseData = () => {
+	const getCourseData = () => {
 		enrolledCourses.map((course) => {
 			if (course._id === courseId) {
 				setCourseData(course);
@@ -42,27 +43,21 @@ const Player = () => {
 		});
 	};
 
+	const toggleSection = (index) => {
+		setOpenSections((prev) => ({ ...prev, [index]: !prev[index] }));
+	};
 
-
-  // open or close chapter
-  const toggleSection = (index) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }));
-  };
-
-    useEffect(() => {
+	useEffect(() => {
 		if (enrolledCourses.length > 0) {
 			getCourseData();
 		}
 	}, [enrolledCourses]);
 
-//----------------------------------markLectureAsCompleted-------------------------
-  	const markLectureAsCompleted = async (lectureId) => {
+	const markLectureAsCompleted = async (lectureId) => {
 		try {
 			const token = await getToken();
-			const { data } = await axios.post(backendUrl + "/api/user/update-course-progress",
+			const { data } = await axios.post(
+				backendUrl + "/api/user/update-course-progress",
 				{ courseId, lectureId },
 				{ headers: { Authorization: `Bearer ${token}` } }
 			);
@@ -77,17 +72,19 @@ const Player = () => {
 			toast.error(error.message);
 		}
 	};
-///-----------------------------getCourseProgress ------------------------------
-  const getCourseProgress = async () => {
+
+	const getCourseProgress = async () => {
 		try {
 			const token = await getToken();
-			const { data } = await axios.post(backendUrl + "/api/user/get-course-progress",
+			const { data } = await axios.post(
+				backendUrl + "/api/user/get-course-progress",
 				{ courseId },
 				{ headers: { Authorization: `Bearer ${token}` } }
 			);
 
 			if (data.success) {
 				setProgressData(data.progressData);
+				// don't show toast here every time if noisy
 			} else {
 				toast.error(data.message);
 			}
@@ -96,12 +93,12 @@ const Player = () => {
 		}
 	};
 
-  //--------------------------------handle rate---------------------
-  const handleRate = async (rating) => {
+	const handleRate = async (rating) => {
 		try {
 			const token = await getToken();
 
-			const { data } = await axios.post(backendUrl + "/api/user/add-rating",
+			const { data } = await axios.post(
+				backendUrl + "/api/user/add-rating",
 				{ courseId, rating },
 				{ headers: { Authorization: `Bearer ${token}` } }
 			);
@@ -116,15 +113,80 @@ const Player = () => {
 		}
 	};
 
-  useEffect(() => {
+	useEffect(() => {
 		getCourseProgress();
 	}, []);
 
+	// Helper: get first lecture object (if exists)
+	const getFirstLecture = () => {
+		if (!courseData) return null;
+		for (let i = 0; i < courseData.courseContent.length; i++) {
+			const chapter = courseData.courseContent[i];
+			if (chapter.chapterContent && chapter.chapterContent.length > 0) {
+				const lecture = chapter.chapterContent[0];
+				// attach chapter/lecture numbers in same shape you use elsewhere
+				return { ...lecture, chapter: i + 1, lecture: 1 };
+			}
+		}
+		return null;
+	};
 
-  // show loader while loading
-  if (!courseData) return <Loading />;
+	// When user clicks thumbnail/play overlay, open first lecture
+	const handleThumbnailClick = () => {
+		const first = getFirstLecture();
+		if (first) {
+			setPlayerData(first);
+		} else {
+			toast.info("No lectures available to play.");
+		}
+	};
 
- 	return courseData ? (
+	// Reset loading/playing states when playerData changes
+	useEffect(() => {
+		if (playerData) {
+			setIsLoadingVideo(true);
+			setIsPlaying(false);
+		} else {
+			setIsLoadingVideo(false);
+			setIsPlaying(false);
+		}
+	}, [playerData]);
+
+	// YouTube callbacks
+	const onPlayerReady = (event) => {
+		// attempt to start playback (autoplay may be blocked by browser)
+		try {
+			event.target.playVideo();
+		} catch (e) {
+			// ignore
+		}
+	};
+
+	const onPlayerStateChange = (event) => {
+		// YouTube player states: -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering
+		const state = event.data;
+		if (state === 1) {
+			// playing
+			setIsPlaying(true);
+			setIsLoadingVideo(false);
+		} else if (state === 3) {
+			// buffering
+			setIsLoadingVideo(true);
+		} else if (state === 0 || state === 2 || state === -1) {
+			// ended / paused / unstarted - hide loading but mark playing false
+			setIsPlaying(false);
+			setIsLoadingVideo(false);
+		}
+	};
+
+	const youtubeOpts = {
+		width: "100%",
+		playerVars: {
+			autoplay: 1, // ask to autoplay
+		},
+	};
+
+	return courseData ? (
 		<>
 			<div className="p-4 sm:p-10 flex flex-col-reverse md:grid md:grid-cols-2 gap-10 md:px-36">
 				{/* Left column */}
@@ -264,7 +326,7 @@ const Player = () => {
 						// Thumbnail with a centered play icon overlay. Click to open first lecture.
 						<div
 							className="relative cursor-pointer select-none"
-							// onClick={handleThumbnailClick}
+							onClick={handleThumbnailClick}
 						>
 							<img
 								src={courseData ? courseData.courseThumbnail : ""}
@@ -288,6 +350,7 @@ const Player = () => {
 					)}
 				</div>
 			</div>
+		
 			<Footer />
 		</>
 	) : (
