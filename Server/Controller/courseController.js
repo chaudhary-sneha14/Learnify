@@ -1,5 +1,3 @@
-
-
 // ----------------------------get all courses----------------------------------
 
 import Course from "../Model/Course.js";

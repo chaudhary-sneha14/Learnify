@@ -1,6 +1,5 @@
 import React, { useContext } from "react";
 import { assets } from "../../assets/assets"; // Import icons and images
-
 import { Link } from "react-router-dom"; // Used for navigation
 import { AppContext } from "../../Context/AppContext"; // Global context
 

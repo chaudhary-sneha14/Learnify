@@ -21,26 +21,14 @@ const AddCourse = () => {
 
   // ================== COURSE STATE SECTION ==================
 
-  // course title input
-  const [courseTitle, setCourseTitle] = useState('')
-
-  // course price input
-  const [coursePrice, setCoursePrice] = useState(0)
-
-  // discount percentage
-  const [discount, setDiscount] = useState(0)
-
-  // thumbnail image file
-  const [image, setImage] = useState(null)
-
-  // all chapters list
-  const [chapters, setChapters] = useState([])
-
-  // popup visibility for adding lecture
-  const [showPopup, setShowPopup] = useState(false)
-
-  // to know which chapter lecture belongs to
-  const [currentChapterId, setCurrentChapterId] = useState(null)
+ 
+  const [courseTitle, setCourseTitle] = useState('')  // course title input
+  const [coursePrice, setCoursePrice] = useState(0) // course price input
+  const [discount, setDiscount] = useState(0)  // discount percentage
+  const [image, setImage] = useState(null)  // thumbnail image file
+  const [chapters, setChapters] = useState([])  // all chapters list
+  const [showPopup, setShowPopup] = useState(false)  // popup visibility for adding lecture
+  const [currentChapterId, setCurrentChapterId] = useState(null)  // to know which chapter lecture belongs to
 
   // lecture input fields
   const [lectureDetails, setLectureDetails] = useState({
